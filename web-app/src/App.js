@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 import CharCard from './CharCard';
@@ -58,7 +57,9 @@ function App() {
     <div className="App">
       <CharContext.Provider value={charMap}>
         {enka && enka['characters_details'].map((e, i) => {
-          return <CharCard key={i} data={e}/>;
+          if (i == 0) {
+            return <CharCard key={i} data={e}/>;
+          }
         })}
       </CharContext.Provider>
     </div>
