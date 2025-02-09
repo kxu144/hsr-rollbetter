@@ -78,7 +78,7 @@ async def fetch_player_info(uid):
                     "value": main_stat.formatted_value
                 },
                 "sub_stats": [
-                    {"name": substat.name, "value": substat.formatted_value} for substat in relic.sub_stats
+                    {"name": substat.name, "value": f"{substat.value}{'%' * substat.is_percentage}"} for substat in relic.sub_stats
                 ]
             }
             character_data["relics"].append(relic_data)

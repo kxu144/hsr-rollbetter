@@ -5,12 +5,13 @@ def p(relic, target_stats: dict):
     """
     target_stats is a list of desirable stats used to determine how well relics roll
     returns probability of relic main stat, probability of getting substats to roll at least the current score, and 
-    SUBSTAT_VALUE, a dict mapping substat combinations to substat probabilities.
+    SUBSTAT_VALUE, list containing dicts {'substats', 'p'}
 
     need to multiply main_stat_prob to substat_prob and SUBSTAT_VALUE.
     """
 
     main_stat = format_stat(relic['main_stat'])
+    print('TEST', relic['type'], main_stat)
     main_stat_prob = MAIN_STAT_PROBABILITIES[relic['type']][main_stat]
 
     sub_dict = {}
@@ -33,7 +34,7 @@ def prob_substat(main_stat, subs, target_stats, target_score, prob_4liner=0.2):
     substat_score = sum(target_stats.get(s, 0) for s in subs)
 
     total_prob = 0
-    SUBSTAT_VALUE = {}
+    SUBSTAT_VALUE = []
     for a, b, c, d in all_permutations:
         sub_score = [target_stats.get(e, 0) for e in (a, b, c, d)]
         unrolled_score = sum(sub_score)
@@ -59,7 +60,10 @@ def prob_substat(main_stat, subs, target_stats, target_score, prob_4liner=0.2):
             roll_prob = 1
 
         comb_prob = substat_prob * roll_prob
-        SUBSTAT_VALUE[frozenset((a, b, c, d))] = comb_prob
+        SUBSTAT_VALUE.append({
+            'substats': [a, b, c, d],
+            'p': comb_prob
+        })
 
         total_prob += comb_prob
     
@@ -95,18 +99,18 @@ SUBSTAT_WEIGHTS = {
 }
 
 SUBSTAT_MAX_ROLL = {
-    'HP': 42,
-    'ATK': 21,
-    'DEF': 21,
-    'HP%': 4.3,
-    'ATK%': 4.3,
+    'HP': 42.33755,
+    'ATK': 21.168773,
+    'DEF': 21.168773,
+    'HP%': 4.32,
+    'ATK%': 4.32,
     'DEF%': 5.4,
     'SPD': 2.6,
-    'CRIT Rate': 3.2,
-    'CRIT DMG': 6.4,
-    'Effect Hit Rate': 4.3,
-    'Effect RES': 4.3,
-    'Break Effect': 6.4
+    'CRIT Rate': 3.24,
+    'CRIT DMG': 6.48,
+    'Effect Hit Rate': 4.32,
+    'Effect RES': 4.32,
+    'Break Effect': 6.48
 }
 
 MAIN_STAT_PROBABILITIES = {
@@ -114,8 +118,8 @@ MAIN_STAT_PROBABILITIES = {
     'HAND': {'ATK': 1.0},
     'BODY': {'HP%': 0.2, 'ATK%': 0.2, 'DEF%': 0.2, 'Effect Hit Rate': 0.1, 'Outgoing Healing Boost': 0.1, 'CRIT Rate': 0.1, 'CRIT DMG': 0.1},
     'FOOT': {'HP%': 0.28, 'ATK%': 0.3, 'DEF%': 0.3, 'SPD': 0.12},
-    'ORB': {'HP%': 0.12, 'ATK%': 0.13, 'DEF%': 0.12, 'Physical DMG Boost': 0.09, 'Fire DMG Boost': 0.09, 'Ice DMG Boost': 0.09, 'Wind DMG Boost': 0.09, 'Lightning DMG Boost': 0.09, 'Quantum DMG Boost': 0.09, 'Imaginary DMG Boost': 0.09},
-    'ROPE': {'HP%': 0.26, 'ATK%': 0.27, 'DEF%': 0.24, 'Break Effect': 0.16, 'Energy Regeneration Rate': 0.05},
+    'ROPE': {'HP%': 0.12, 'ATK%': 0.13, 'DEF%': 0.12, 'Physical DMG Boost': 0.09, 'Fire DMG Boost': 0.09, 'Ice DMG Boost': 0.09, 'Wind DMG Boost': 0.09, 'Lightning DMG Boost': 0.09, 'Quantum DMG Boost': 0.09, 'Imaginary DMG Boost': 0.09},
+    'ORBIT': {'HP%': 0.26, 'ATK%': 0.27, 'DEF%': 0.24, 'Break Effect': 0.16, 'Energy Regeneration Rate': 0.05},
 }
 
 
