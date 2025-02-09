@@ -1,8 +1,13 @@
-from itertools import permutations
+from itertools import permutations, product
+import math
 
 def p(relic, target_stats: dict):
     """
     target_stats is a list of desirable stats used to determine how well relics roll
+    returns probability of relic main stat, probability of getting substats to roll at least the current score, and 
+    SUBSTAT_VALUE, a dict mapping substat combinations to substat probabilities.
+
+    need to multiply main_stat_prob to substat_prob and SUBSTAT_VALUE.
     """
 
     main_stat = format_stat(relic['main_stat'])
@@ -10,13 +15,14 @@ def p(relic, target_stats: dict):
 
     sub_dict = {}
     for sub in relic['sub_stats']:
-        sub_dict[format_stat(sub)] = sub['value']
+        sub_dict[format_stat(sub)] = float(sub['value'].strip('%'))
 
-    substat_prob = prob_substat(main_stat, list(sub_dict.keys()), target_stats)
-        
-    pass
+    roll_score = sum(sub_dict[s] / SUBSTAT_MAX_ROLL[s] * target_stats[s] for s in target_stats if s in sub_dict)
+    substat_prob, SUBSTAT_VALUE = prob_substat(main_stat, list(sub_dict.keys()), target_stats, roll_score)
+    
+    return main_stat_prob, substat_prob, SUBSTAT_VALUE
 
-def prob_substat(main_stat, subs, target_stats):
+def prob_substat(main_stat, subs, target_stats, target_score, prob_4liner=0.2):
     """
     finds probability of rolling a piece equal or better than the current subs
     """
@@ -24,17 +30,45 @@ def prob_substat(main_stat, subs, target_stats):
     all_permutations = permutations(pool, 4)
     
     weight = sum(SUBSTAT_WEIGHTS.values()) - SUBSTAT_WEIGHTS.get(main_stat, 0)
-    score = sum(target_stats.get(s, 0) for s in subs)
+    substat_score = sum(target_stats.get(s, 0) for s in subs)
 
     total_prob = 0
+    SUBSTAT_VALUE = {}
     for a, b, c, d in all_permutations:
-        if score > target_stats.get(a, 0) + target_stats.get(b, 0) + target_stats.get(c, 0) + target_stats.get(d, 0):
+        sub_score = [target_stats.get(e, 0) for e in (a, b, c, d)]
+        unrolled_score = sum(sub_score)
+        if substat_score > unrolled_score:
             continue
-        prob = SUBSTAT_WEIGHTS[a] * SUBSTAT_WEIGHTS[b] * SUBSTAT_WEIGHTS[c] * SUBSTAT_WEIGHTS[d]
-        prob /= weight * (weight - SUBSTAT_WEIGHTS[a]) * (weight - SUBSTAT_WEIGHTS[a] - SUBSTAT_WEIGHTS[b]) * (weight - SUBSTAT_WEIGHTS[a] - SUBSTAT_WEIGHTS[b] - SUBSTAT_WEIGHTS[c])
-        total_prob += prob
+        
+        substat_prob = SUBSTAT_WEIGHTS[a] * SUBSTAT_WEIGHTS[b] * SUBSTAT_WEIGHTS[c] * SUBSTAT_WEIGHTS[d]
+        substat_prob /= weight * (weight - SUBSTAT_WEIGHTS[a]) * (weight - SUBSTAT_WEIGHTS[a] - SUBSTAT_WEIGHTS[b]) * (weight - SUBSTAT_WEIGHTS[a] - SUBSTAT_WEIGHTS[b] - SUBSTAT_WEIGHTS[c])
+
+        if target_score:
+            roll_prob = 0
+            for aw, bw, cw, dw in distributions(4):
+                if target_score - unrolled_score > aw * sub_score[0] + bw * sub_score[1] + cw * sub_score[2] + dw * sub_score[3]:
+                    continue
+                dist_weight = math.factorial(4) / (4**4 * math.factorial(aw) * math.factorial(bw) * math.factorial(cw) * math.factorial(dw))
+                roll_prob += dist_weight * (1 - prob_4liner)
+            for aw, bw, cw, dw in distributions(5):
+                if target_score - unrolled_score > aw * sub_score[0] + bw * sub_score[1] + cw * sub_score[2] + dw * sub_score[3]:
+                    continue
+                dist_weight = math.factorial(5) / (4**5 * math.factorial(aw) * math.factorial(bw) * math.factorial(cw) * math.factorial(dw))
+                roll_prob += dist_weight * prob_4liner
+        else:
+            roll_prob = 1
+
+        comb_prob = substat_prob * roll_prob
+        SUBSTAT_VALUE[frozenset((a, b, c, d))] = comb_prob
+
+        total_prob += comb_prob
     
-    return total_prob
+    return total_prob, SUBSTAT_VALUE
+
+def distributions(total, size=4):
+    for comb in product(range(total + 1), repeat=size):
+        if sum(comb) == total:
+            yield comb
 
 def format_stat(stat):
     """
@@ -60,6 +94,21 @@ SUBSTAT_WEIGHTS = {
     'Break Effect': 8
 }
 
+SUBSTAT_MAX_ROLL = {
+    'HP': 42,
+    'ATK': 21,
+    'DEF': 21,
+    'HP%': 4.3,
+    'ATK%': 4.3,
+    'DEF%': 5.4,
+    'SPD': 2.6,
+    'CRIT Rate': 3.2,
+    'CRIT DMG': 6.4,
+    'Effect Hit Rate': 4.3,
+    'Effect RES': 4.3,
+    'Break Effect': 6.4
+}
+
 MAIN_STAT_PROBABILITIES = {
     'HEAD': {'HP': 1.0},
     'HAND': {'ATK': 1.0},
@@ -74,5 +123,5 @@ MAIN_STAT_PROBABILITIES = {
 
 if __name__ == '__main__':
     # debug
-    prob = prob_substat('HP', ['CRIT Rate', 'ATK', 'CRIT DMG', 'DEF'], {'CRIT Rate': 100, 'CRIT DMG': 100, 'ATK%': 10, 'ATK': 1})
+    prob, d = prob_substat('CRIT DMG', ['SPD'], {'SPD': 1,}, 6.9/2.6)
     print(prob)
