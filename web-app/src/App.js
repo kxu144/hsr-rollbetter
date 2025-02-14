@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import './App.css';
 
 import CharCard from './CharCard';
@@ -20,6 +20,11 @@ function App() {
       getCharMap();
     }
   }, [charMap]);
+
+
+
+  var [uid, setUID] = useState();
+  var uidRef = useRef(null);
 
 
   var [enka, setEnka] = useState();
@@ -46,15 +51,17 @@ function App() {
     };
 
     // Fire the request when the page is loaded
-    if (enka === undefined) {
-      sendRequest(600736233);
+    if (uid) {
+      sendRequest(parseInt(uid));
     }
-  }, []); // Empty dependency array ensures this runs only once when the component mounts
+  }, [uid]); // Empty dependency array ensures this runs only once when the component mounts
 
 
 
   return (
     <div className="App">
+      <input ref={uidRef} type='number' min='0' step='1' value={uid} placeholder='600736233'/>
+      <button onClick={(e) => setUID(e.target.value || uidRef.current.placeholder)}>Enter</button>
       <CharContext.Provider value={charMap}>
         {enka && enka['characters_details'].map((e, i) => {
           if (i == 0) {
