@@ -1,7 +1,7 @@
 from itertools import permutations, product
 import math
 
-async def p(relic, target_stats: dict):
+def p(relic, target_stats: dict):
     """
     target_stats is a list of desirable stats used to determine how well relics roll
     returns probability of relic main stat, probability of getting substats to roll at least the current score, and 
@@ -11,7 +11,6 @@ async def p(relic, target_stats: dict):
     """
 
     main_stat = format_stat(relic['main_stat'])
-    print('TEST', relic['type'], main_stat)
     main_stat_prob = MAIN_STAT_PROBABILITIES[relic['type']][main_stat]
 
     sub_dict = {}
