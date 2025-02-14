@@ -28,6 +28,23 @@ function CharCard({ data }) {
         }
     }, [data]);
 
+    const [improveP, setImproveP] = useState(null);
+    useEffect(() => {
+        if (p.length > 0) {
+            let farmP1 = 0;
+            let farmP2 = 0;
+            let craftP = 0;
+            for (let i = 0; i < p.length; i++) {
+                craftP = Math.max(craftP, p[i]['mainstat'] * p[i]['substat']); // improve char by crafting is just max probability
+                if (i < 4) {
+                    farmP1 += 0.125 * p[i]['mainstat'] * p[i]['substat']; // 0.5 * 0.25 for right set + right type
+                } else {
+                    farmP2 += 0.25 * p[i]['mainstat'] * p[i]['substat']; // 0.5 * 0.5
+                }
+            }
+            setImproveP([Math.max(farmP1, farmP2), craftP]);
+        }
+    }, [p])
 
     return (
         <div>
@@ -35,6 +52,8 @@ function CharCard({ data }) {
             {data['relics'].map((e, i) => {
                 return <Relic key={i} relic={e} p={i < p.length ? p[i] : undefined}/>;
             })}
+            {improveP && `Probability of farming improvement: ${improveP[0]}`}
+            {improveP && `Probability of crafting improvement: ${improveP[1]}`}
         </div>
     )
 }
