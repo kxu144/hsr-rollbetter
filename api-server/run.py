@@ -1,9 +1,11 @@
 import asyncio
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from enka_api import fetch_player_info
 from prob import p
-from util import fetch_player_info
+from util import get_asyncio_loop
 
 app = Flask(__name__)
 
@@ -13,15 +15,19 @@ CORS(app)
 
 @app.route('/enka/<uid>', methods=['GET'])
 def getData(uid):
-    player_info = asyncio.run(fetch_player_info(uid))
+    player_info = get_asyncio_loop().run_until_complete(fetch_player_info(uid))
     return jsonify(player_info)
 
-@app.route('/relic', methods=['POST'])
+@app.route('/relics', methods=['POST'])
 def findProbability():
-    relic = request.get_json()
-    msp, ssp, combs = p(relic, {'CRIT Rate': 1, 'CRIT DMG': 1, 'ATK%': 2/3, 'ATK': 1/4})
+    relics = request.get_json()['relics']
+    print(relics)
+    
+    tasks = [p(relic, {'CRIT Rate': 1, 'CRIT DMG': 1, 'ATK%': 2/3, 'ATK': 1/4}) for relic in relics]
+    results = get_asyncio_loop().run_until_complete(asyncio.gather(*tasks))
+    output = [{'mainstat': msp, 'substat': ssp, 'combinations': combs} for msp, ssp, combs in results]
 
-    return jsonify({'mainstat': msp, 'substat': ssp, 'combinations': combs})
+    return jsonify(output)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

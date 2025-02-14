@@ -26,7 +26,7 @@ function App() {
   useEffect(() => {
     const sendRequest = async (uid) => {
       try {
-        const response = await fetch(`http://localhost:5000/enka/${uid}`, {
+        const response = await fetch(`http://localhost:5001/enka/${uid}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
