@@ -57,6 +57,9 @@ function App() {
   }, [uid]); // Empty dependency array ensures this runs only once when the component mounts
 
 
+  const [charIndex, setCharIndex] = useState(0);
+
+
 
   return (
     <div className="App">
@@ -64,10 +67,9 @@ function App() {
       <button onClick={(e) => setUID(e.target.value || uidRef.current.placeholder)}>Enter</button>
       <CharContext.Provider value={charMap}>
         {enka && enka['characters_details'].map((e, i) => {
-          if (i == 0) {
-            return <CharCard key={i} data={e}/>;
-          }
+          return <div style={{border: '1px solid black'}} key={i} onClick={() => setCharIndex(i)}>{e.name}</div>;
         })}
+        {enka && <CharCard data={enka['characters_details'][charIndex]}/>}
       </CharContext.Provider>
     </div>
   );
